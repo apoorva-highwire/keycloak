@@ -1,0 +1,20 @@
+global:
+  scrape_interval: 15s
+
+scrape_configs:
+  - job_name: prometheus
+    static_configs:
+      - targets: ["localhost:9090"]
+
+  - job_name: iam-service
+    metrics_path: /actuator/prometheus
+    static_configs:
+      - targets: ["iam-service:8090"]
+
+  - job_name: keycloak
+    metrics_path: /metrics
+    static_configs:
+      # Management interface, NOT the main 8080 port — confirmed live
+      # that Keycloak 26.8's metrics only exist there, not on the realm-
+      # serving port, when KC_METRICS_ENABLED=true.
+      - targets: ["keycloak:9000"]

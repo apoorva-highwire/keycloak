@@ -1,0 +1,85 @@
+{
+  "uid": "service-logs",
+  "id": null,
+  "title": "Service Logs",
+  "schemaVersion": 39,
+  "version": 1,
+  "editable": true,
+  "tags": ["nejm"],
+  "time": { "from": "now-30m", "to": "now" },
+  "refresh": "10s",
+  "templating": {
+    "list": [
+      {
+        "name": "service",
+        "type": "query",
+        "label": "Service",
+        "datasource": { "type": "loki", "uid": "loki" },
+        "query": "label_values(compose_service)",
+        "refresh": 2,
+        "includeAll": true,
+        "allValue": ".+",
+        "multi": true,
+        "current": { "text": "All", "value": "$__all" }
+      },
+      {
+        "name": "level",
+        "type": "custom",
+        "label": "Level",
+        "description": "Filters on the log line's level token, not the whole line — combine freely with Search below.",
+        "query": "All : .*,INFO : INFO ,WARN : WARN ,ERROR : ERROR",
+        "multi": false,
+        "includeAll": false,
+        "current": { "text": "All", "value": ".*" }
+      },
+      {
+        "name": "search",
+        "type": "textbox",
+        "label": "Search (regex)",
+        "description": "Regex, matched against the full log line — a plain word still works as a substring match. Examples: a username or request id as-is; \"50[0-9]\" for any 5xx; \"POST|PUT|DELETE\" for writes only. Leave as .* to see everything.",
+        "query": ".*",
+        "current": { "text": ".*", "value": ".*" }
+      },
+      {
+        "name": "exclude",
+        "type": "custom",
+        "label": "Exclude",
+        "description": "Drops lines matching this regex. 'None' is a true no-op (not an empty-string trick that would hide everything).",
+        "query": "None (exclude nothing) : $^,Health-check polling : actuator/(health|prometheus),Framework/startup noise : org\\.springframework|org\\.apache\\.catalina",
+        "multi": false,
+        "includeAll": false,
+        "current": { "text": "None (exclude nothing)", "value": "$^" }
+      },
+      {
+        "name": "Filters",
+        "type": "adhoc",
+        "label": "Label filters",
+        "description": "Click '+ Add filter' to filter on ANY Loki label (not just compose_service) — e.g. filename, container_id — without needing a dedicated dropdown for it.",
+        "datasource": { "type": "loki", "uid": "loki" }
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 1,
+      "type": "logs",
+      "title": "$service",
+      "gridPos": { "h": 20, "w": 24, "x": 0, "y": 0 },
+      "datasource": { "type": "loki", "uid": "loki" },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "loki", "uid": "loki" },
+          "expr": "{compose_service=~\"$service\"} |~ \"$level\" |~ \"$search\" !~ \"$exclude\""
+        }
+      ],
+      "options": {
+        "showTime": true,
+        "showLabels": true,
+        "wrapLogMessage": true,
+        "sortOrder": "Descending",
+        "enableLogDetails": true
+      }
+    }
+  ]
+}

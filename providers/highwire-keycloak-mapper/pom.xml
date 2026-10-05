@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>org.highwire</groupId>
+  <artifactId>highwire-keycloak-mapper</artifactId>
+  <version>0.1.0</version>
+  <packaging>jar</packaging>
+
+  <!--
+    A Keycloak SPI provider, not a Spring app — this is a plain jar dropped
+    into Keycloak's own /opt/keycloak/providers/ directory, so it has no
+    Spring Boot parent like the other Maven modules in this repo
+    (content-sync-poc). Keycloak itself supplies these APIs at runtime
+    (hence "provided" scope throughout) — bundling them into the jar would
+    conflict with the server's own copies.
+  -->
+
+  <properties>
+    <java.version>21</java.version>
+    <maven.compiler.source>21</maven.compiler.source>
+    <maven.compiler.target>21</maven.compiler.target>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <!-- Must match the Keycloak server version this is deployed into
+         (see ../../docker/Dockerfile's quay.io/keycloak/keycloak:26.8.0) —
+         confirmed 26.8.0 exists on Maven Central before pinning it here,
+         not guessed. -->
+    <keycloak.version>26.8.0</keycloak.version>
+  </properties>
+
+  <dependencies>
+    <dependency>
+      <groupId>org.keycloak</groupId>
+      <artifactId>keycloak-server-spi</artifactId>
+      <version>${keycloak.version}</version>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.keycloak</groupId>
+      <artifactId>keycloak-server-spi-private</artifactId>
+      <version>${keycloak.version}</version>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.keycloak</groupId>
+      <artifactId>keycloak-services</artifactId>
+      <version>${keycloak.version}</version>
+      <scope>provided</scope>
+    </dependency>
+  </dependencies>
+</project>

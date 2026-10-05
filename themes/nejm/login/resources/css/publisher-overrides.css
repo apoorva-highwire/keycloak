@@ -1,0 +1,26 @@
+/*
+ * NEJM — redefines only the CSS custom properties declared in hw-base's
+ * css/login.css. Placeholder palette (deep editorial red/navy, not an
+ * official brand extraction) — swap these for the real brand values and
+ * drop the real logo into resources/img/logo.svg before going live.
+ *
+ * Deliberately NOT overriding --hw-primary here, same reasoning as every
+ * other publisher theme: the hero/accent color is the publisher's
+ * identity, the "Sign in" button stays HighWire's own constant navy.
+ */
+
+:root {
+  --hw-header-bg: #7a1620;
+  --hw-hero-to: #4d0e14;
+  --hw-header-fg: #ffffff;
+
+  --hw-link: #7a1620;
+
+  --hw-tile-bg: #faf0ef;
+  --hw-tile-border: #ecd6d4;
+  --hw-tile-hover: #f5e3e1;
+  --hw-tile-fg: #1a2233;
+
+  --hw-logo-url: url("../img/logo.svg");
+  --hw-logo-width: 150px;
+}

@@ -1,0 +1,70 @@
+server:
+  port: 8090
+
+keycloak:
+  admin:
+    # Internal Docker-network address — this service and keycloak share
+    # the same compose network (see ../docker/docker-compose.yml).
+    server-url: http://keycloak:8080
+    # client_credentials, not the bootstrap admin's username/password —
+    # production can't ship a human admin's password in config. The
+    # iam-service client itself (master realm, service account granted
+    # master's "admin" composite role) is provisioned once via
+    # ../scripts/create-iam-client.sh, not created by this app at
+    # startup — the secret below is that script's output for local dev;
+    # a real environment puts it in a secrets store, not here.
+    realm: master
+    client-id: iam-service
+    client-secret: f9EkWmySeiv04KrppIRoGQNRgG61f5aopyh7oaUl3ODONjHkFr3GCdmzMzqXhIYtlBWi3eYImSshu0RoTsJ8ju
+
+highwire:
+  auth:
+    # Local JWT verification, not introspection — see auth-sdk's
+    # JwtAuthConfig/RealmResolvingJwtDecoder. Reuses keycloak.admin.*
+    # above by reference rather than repeating the same secret a second
+    # time — it's the same master-realm, cross-realm-admin credential,
+    # now also used by auth-sdk to fetch each realm's signing keys via
+    # the Admin REST API. No client registered into every realm anymore;
+    # scripts/<realm>/05-create-introspection-client.sh is gone.
+    keycloak-url: http://keycloak:8080
+    admin-realm: ${keycloak.admin.realm}
+    admin-client-id: ${keycloak.admin.client-id}
+    admin-client-secret: ${keycloak.admin.client-secret}
+    # resource-server-client-id and decision-cache-ttl-seconds are
+    # deliberately absent: iam-service has no @PreAuthorize("hasPermission(...)")
+    # checks of its own, so there's no real resource-server clientId to
+    # put here — see AuthSdkProperties for what these mean when a future
+    # service actually needs them. (Live-verified end-to-end against a
+    # real nejm-journal-api test client before being reverted here —
+    # AuthorizationCheckService/KeycloakPermissionEvaluator do work.)
+
+spring:
+  application:
+    # The "application" label Micrometer stamps on every metric this
+    # service exports — Grafana dashboard 17175's $app_name variable and
+    # every panel query filter on this exact label; without it they'd
+    # all come back empty.
+    name: iam-service
+  data:
+    redis:
+      # Docker-network address — see ../docker/docker-compose.yml's
+      # dragonfly service. Same convention as keycloak-url above: this
+      # service only ever runs inside that compose network.
+      host: dragonfly
+      port: 6379
+
+management:
+  endpoints:
+    web:
+      exposure:
+        # prometheus: scraped by the prometheus service, unauthenticated
+        # (see SecurityConfig's permitAll for this path) — matches how
+        # Prometheus itself has no way to carry our bearer tokens anyway.
+        include: health,prometheus
+  metrics:
+    tags:
+      # NOT automatic — Micrometer doesn't stamp this by itself, confirmed
+      # against dashboard 17175's own panel queries, which all filter on
+      # application="$app_name". Without this line every one of them
+      # would come back empty despite /actuator/prometheus working fine.
+      application: ${spring.application.name}

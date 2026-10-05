@@ -1,0 +1,369 @@
+/*
+ * HighWire admin console branding — full shell: dark masthead + dark
+ * sidebar (both maroon, matching), light content area. Staff-facing only,
+ * one shared theme (no per-publisher variant, unlike login/account/email).
+ *
+ * See ../../account/resources/css/account.css's header comment for why
+ * !important and explicit background/text color pairing are both used
+ * deliberately here — confirmed live that without them the masthead kept
+ * showing PatternFly's own default dark styling instead of ours, and the
+ * content area had invisible white-on-white text.
+ */
+
+:root {
+  /* Confirmed from the real admin bundle: PatternFly's dark theme isn't a
+     manual toggle anywhere in the UI — the app adds .pf-v5-theme-dark to
+     <html> automatically from `matchMedia("(prefers-color-scheme: dark)")`,
+     live, with no way for a visitor to opt out short of changing their OS.
+     Every background/color pair below already carries !important, which
+     wins over PatternFly's `:where(.pf-v5-theme-dark) ...` variants
+     regardless (:where() contributes zero specificity) — so our fixed
+     brand palette already applies on a dark-mode OS, which is what we want
+     for a branded console. color-scheme: light closes the one gap
+     !important can't reach: native, non-PatternFly browser chrome (check/
+     radio ticks, scrollbars, date-picker popups) reads prefers-color-scheme
+     directly and would otherwise still render dark. */
+  color-scheme: light;
+
+  --hw-header-bg: #6a1130;
+  --hw-header-fg: #ffffff;
+  --hw-surface: #f5f7fb;
+  --hw-card-bg: #ffffff;
+  --hw-input-bg: #ffffff;
+  --hw-label-bg: transparent;
+  --hw-text: #1a2233;
+  --hw-primary: #121a2e;
+  --hw-primary-hover: #1d2a47;
+  --hw-border: #d2d6dd;
+  --hw-text-disabled: #8a8f98;
+}
+
+/* GLOBAL DARK-MODE SWEEP — confirmed from the real compiled CSS that
+   PatternFly's whole dark theme boils down to one rule,
+   :where(.pf-v5-theme-dark){ --pf-v5-global--BackgroundColor--100: #1b1d21;
+   ...and ~85 more tokens... }, applied with ZERO selector specificity
+   (:where() never counts towards specificity, by design) whenever that
+   class lands on <html> — which happens automatically from the visitor's
+   OS dark-mode setting, confirmed from the real admin bundle JS. Every
+   component we've fixed one at a time so far (modal, wizard, drawer,
+   pagination, tabs, input-group...) was reading one of these same global
+   tokens into its own local variable. Pinning the handful that actually
+   drive background/border/text here, at plain :root (ordinary specificity,
+   which already beats :where(...)'s zero), means any OTHER component that
+   reads from them — including ones we haven't hit yet — now resolves to
+   the light value regardless of the visitor's OS theme, instead of
+   needing its own one-off override. Values are PatternFly's own real
+   light-theme defaults (extracted from the compiled CSS), not guessed. */
+:root {
+  --pf-v5-global--BackgroundColor--100: #fff;
+  --pf-v5-global--BackgroundColor--150: #fafafa;
+  --pf-v5-global--BackgroundColor--200: #f0f0f0;
+  --pf-v5-global--BorderColor--100: #d2d2d2;
+  --pf-v5-global--BorderColor--200: #8a8d90;
+  --pf-v5-global--BorderColor--300: #f0f0f0;
+  --pf-v5-global--Color--100: #151515;
+  --pf-v5-global--Color--200: #6a6e73;
+}
+
+.pf-v5-c-page {
+  background-color: var(--hw-surface) !important;
+  color: var(--hw-text) !important;
+}
+
+.pf-v5-c-masthead {
+  background-color: var(--hw-header-bg) !important;
+  color: var(--hw-header-fg) !important;
+}
+
+/* Confirmed via live DOM inspection (inline style testing) that the
+   masthead nests toolbar containers with their own opaque background,
+   sitting on top of and masking the masthead's own color — styling the
+   outer element alone wasn't enough. Make every nested layer transparent
+   so the masthead's maroon is what actually shows. */
+.pf-v5-c-masthead__content,
+.pf-v5-c-masthead .pf-v5-c-toolbar,
+.pf-v5-c-masthead .pf-v5-c-toolbar__content {
+  background: transparent !important;
+}
+
+.pf-v5-c-page__sidebar {
+  background-color: var(--hw-header-bg) !important;
+}
+
+.pf-v5-c-page__sidebar {
+  --pf-v5-c-nav__item--m-current--not--m-expanded__link--BackgroundColor: rgba(255, 255, 255, 0.14);
+}
+
+.pf-v5-c-page__main-section,
+.pf-v5-c-page__main-section.pf-m-light {
+  background-color: var(--hw-surface) !important;
+  color: var(--hw-text) !important;
+}
+
+/* Drawer (e.g. a detail/edit panel sliding in over a list) — same unset-
+   custom-property pattern as everything else: content/body/panel each
+   default their own background independent of the page behind them. Group
+   containers inside (toolbar groups, form groups) have no background of
+   their own in PatternFly — they were only looking wrong because the
+   drawer surface itself was dark; fixing the drawer should resolve both. */
+.pf-v5-c-drawer__content,
+.pf-v5-c-drawer__body,
+.pf-v5-c-drawer__panel,
+.pf-v5-c-drawer__panel-main,
+.pf-v5-c-drawer__panel.pf-m-resizable {
+  background-color: var(--hw-card-bg) !important;
+  color: var(--hw-text) !important;
+}
+
+/* The main-section-level color above only sets the default for children
+   that don't declare their own — confirmed live (inline style testing)
+   that content text, table, and table headers each have their own
+   explicit color, which wins over an inherited value regardless of the
+   parent's !important. Targeted directly here for the same reason. */
+.pf-v5-c-page__main-breadcrumb,
+.pf-v5-c-content,
+.pf-v5-c-content h1,
+.pf-v5-c-content h2,
+.pf-v5-c-content p,
+.pf-v5-c-table,
+.pf-v5-c-table__th,
+.pf-v5-c-table__td,
+.pf-v5-c-card,
+.pf-v5-c-toolbar:not(.pf-v5-c-masthead .pf-v5-c-toolbar) {
+  background-color: var(--hw-card-bg) !important;
+  color: var(--hw-text) !important;
+}
+
+/* Forms: checked against the real compiled CSS (not guessed) — inputs
+   (.pf-v5-c-form-control) already default to dark-on-light internally
+   regardless of context, so they needed no fix. But labels, helper text,
+   and checkbox/radio labels read color from --pf-v5-global--Color--100,
+   a custom property (not the `color` property), which our main-section
+   override never touches — that variable keeps whatever the document
+   root resolved it to, independent of our `color` override above. Same
+   fix as the table: set the literal color directly. */
+.pf-v5-c-form__label,
+.pf-v5-c-form__label-text,
+.pf-v5-c-form__group-label,
+.pf-v5-c-form__group-label-text,
+.pf-v5-c-form__helper-text,
+.pf-v5-c-check__label,
+.pf-v5-c-radio__label {
+  color: var(--hw-text) !important;
+  background-color: var(--hw-label-bg) !important;
+}
+
+/* Form control background — the <span class="pf-v5-c-form-control"> that
+   wraps each <input> (confirmed from the real Realm Settings form markup).
+   PatternFly pairs a dark-variant background with light text as a matched
+   set in some contexts — overriding only background-color last time left
+   the light text color active, producing invisible white-on-white. Both
+   properties are set together here so they can never mismatch. Exposed as
+   its own token (separate from --hw-card-bg) so it can be tinted
+   independently later without touching anything else. */
+.pf-v5-c-form-control {
+  background-color: var(--hw-input-bg) !important;
+  color: var(--hw-text) !important;
+}
+
+/* The wrapper rule above never actually reached the visible text —
+   confirmed from the real compiled CSS that the input itself has its own
+   explicit color declaration (.pf-v5-c-form-control>:is(input,select,
+   textarea) { color: var(--pf-v5-c-form-control--Color); ... }), which an
+   element always uses over whatever the parent's color is, independent of
+   inheritance entirely. The actual fix has to target the input directly. */
+.pf-v5-c-form-control > input,
+.pf-v5-c-form-control > select,
+.pf-v5-c-form-control > textarea {
+  color: var(--hw-text) !important;
+  background-color: transparent !important;
+}
+
+/* Select-style dropdowns (e.g. Require SSL, Unmanaged Attributes) and
+   empty-state body text (e.g. "No ACR to LoA Mapping...") — checked
+   against real compiled CSS from the actual Realm Settings form — same
+   --pf-v5-global--Color--100 contextual-variable issue as labels above.
+   Also pairs background here for the same dark-variant reason as
+   form-control above (the dropdown toggle was rendering with a dark/black
+   background from that same unpaired-override mistake).
+   .pf-v5-c-menu-toggle is ALSO the masthead's Help/user-dropdown buttons
+   and the sidebar's realm selector, both of which correctly want LIGHT
+   text on our dark maroon — so this must be scoped to the main content
+   area only, not applied blanket, or it would break those. */
+.pf-v5-c-page__main .pf-v5-c-menu-toggle {
+  background-color: var(--hw-input-bg) !important;
+  color: var(--hw-text) !important;
+}
+.pf-v5-c-empty-state__body {
+  color: var(--hw-text) !important;
+}
+
+/* Modal dialogs — confirmed this is the exact mechanism PatternFly's
+   auto dark-mode uses everywhere: :where(.pf-v5-theme-dark) .pf-v5-c-X
+   swaps in a dark BackgroundColor custom property on any visitor whose OS
+   is in dark mode (that class gets added to <html> automatically, see the
+   :root color-scheme comment above). Unlike most components we've fixed
+   so far, modal-box hadn't been pinned explicitly yet, so on a dark-mode
+   OS it was falling through to PatternFly's own dark background. */
+.pf-v5-c-modal-box {
+  background-color: var(--hw-card-bg) !important;
+  color: var(--hw-text) !important;
+}
+
+/* Wizard (e.g. multi-step client/flow creation) — same unpinned-component
+   dark-mode leak as modal-box above. */
+.pf-v5-c-wizard__main,
+.pf-v5-c-wizard__main-body,
+.pf-v5-c-wizard__outer-wrap,
+.pf-v5-c-wizard__nav,
+.pf-v5-c-wizard__nav-list,
+.pf-v5-c-wizard__nav-link {
+  background-color: var(--hw-card-bg) !important;
+  color: var(--hw-text) !important;
+}
+.pf-v5-c-wizard__nav-link.pf-m-current {
+  color: var(--hw-primary) !important;
+}
+.pf-v5-c-wizard__footer {
+  background-color: var(--hw-card-bg) !important;
+  color: var(--hw-text) !important;
+}
+
+/* Input-group dividers (e.g. a search field combined with a filter
+   dropdown) — this one reads a raw palette value
+   (--pf-v5-global--palette--black-700), not one of the semantic tokens
+   pinned in the global sweep above, so it needs its own override. */
+.pf-v5-c-input-group {
+  /* A visible-but-subtle border read as "almost the background color but
+     not quite" rather than an intentional divider — removing it entirely
+     reads cleaner than tuning the shade further. */
+  --pf-v5-c-input-group__item--BorderLeftWidth: 0;
+  --pf-v5-c-input-group__item--m-box--BackgroundColor: var(--hw-card-bg);
+}
+
+/* Switch labels (e.g. Require SSL toggles) — same --pf-v5-c-switch__input
+   --(not-)checked__label--Color contextual-variable issue as every other
+   label in this file. Scoped to main content for the same reason as
+   menu-toggle above; switches don't appear in the masthead/sidebar. */
+.pf-v5-c-page__main .pf-v5-c-switch__label {
+  color: var(--hw-text) !important;
+}
+
+/* Tabs (e.g. Realm Settings' General/Keys/Sessions row) — same
+   --pf-v5-c-tabs__link--Color contextual-variable issue; confirmed live it
+   was resolving to a muted dusty-red (#c77070), not our text color. */
+.pf-v5-c-page__main .pf-v5-c-tabs__link {
+  color: var(--hw-text) !important;
+  background-color: var(--hw-card-bg) !important;
+}
+.pf-v5-c-page__main .pf-v5-c-tabs__item.pf-m-current .pf-v5-c-tabs__link {
+  color: var(--hw-primary) !important;
+}
+/* The active-tab underline is a ::before border, not the link's own border
+   — it reads --pf-v5-c-tabs__link--before--BorderBottomColor, a separate
+   custom-property chain from the `color` fix above, resolving through
+   --pf-v5-c-tabs__link--BackgroundColor which we never set. Setting the
+   intermediate custom property wasn't reliably winning, so this targets
+   the ::before's actual border color directly instead — both the logical
+   (border-block-end-color, what PatternFly itself writes) and physical
+   (border-bottom-color) property, since either could be what's rendering. */
+.pf-v5-c-page__main .pf-v5-c-tabs__item.pf-m-current .pf-v5-c-tabs__link::before {
+  border-block-end-color: var(--hw-primary) !important;
+  border-bottom-color: var(--hw-primary) !important;
+}
+
+/* Pagination controls (prev/next, page-size toggle) — the button's own
+   ::after draws its border from --pf-v5-c-button--after--BorderColor,
+   another unset custom property defaulting dark; same recurring pattern.
+   Scoped to main content so masthead/sidebar buttons (already correctly
+   light-on-dark) aren't touched. */
+.pf-v5-c-page__main .pf-v5-c-button:after {
+  border-color: var(--hw-border) !important;
+}
+
+/* Pagination bar itself (e.g. the sticky bottom row) — its background
+   reads --pf-v5-c-pagination--m-bottom--BackgroundColor, another unset
+   custom property defaulting dark; same recurring pattern. */
+.pf-v5-c-page__main .pf-v5-c-pagination {
+  background-color: var(--hw-card-bg) !important;
+  color: var(--hw-text) !important;
+}
+
+/* Plain/icon buttons (pagination prev/next arrows, kebab menus) and
+   disabled buttons — both read color/background from unset custom
+   properties (--pf-v5-c-button--m-plain--*, --pf-v5-c-button--disabled--*),
+   same recurring pattern. Plain buttons stay transparent (icon-only, no
+   fill); disabled ones get a muted text color instead of the default's
+   unset/dark one. */
+.pf-v5-c-page__main .pf-v5-c-button.pf-m-plain:not(.pf-v5-c-chip__button) {
+  color: var(--hw-text) !important;
+  background-color: transparent !important;
+}
+
+/* Multi-select chip remove ("x") buttons specifically excluded above —
+   forcing transparent background on them stripped whatever backdrop the
+   icon was designed to sit against inside the chip, which is why it was
+   looking wrong. Just fix the icon's own color, leave PatternFly's own
+   chip-button background/hover treatment alone. */
+.pf-v5-c-chip__button {
+  color: var(--hw-text) !important;
+}
+
+/* The chip pill itself — direct override rather than relying only on the
+   global sweep, since draggable chips read a raw palette value
+   (--pf-v5-global--palette--black-600) the sweep doesn't cover. */
+.pf-v5-c-chip {
+  background-color: var(--hw-card-bg) !important;
+  color: var(--hw-text) !important;
+}
+.pf-v5-c-chip:before {
+  border-color: var(--hw-border) !important;
+}
+/* The chip text itself has its own explicit color (--pf-v5-c-chip__text
+   --Color), independent of the chip's own color fix above — same
+   element-has-its-own-declaration pattern as every other component in
+   this file. */
+.pf-v5-c-chip__text {
+  color: var(--hw-text) !important;
+}
+
+/* Data list rows (e.g. a mapper/federation list) — same unpinned-
+   component pattern: own background/border from custom properties, not
+   inherited. */
+.pf-v5-c-data-list,
+.pf-v5-c-data-list__item {
+  background-color: var(--hw-card-bg) !important;
+  color: var(--hw-text) !important;
+  border-color: var(--hw-border) !important;
+}
+
+/* Label component (e.g. a status/tag badge next to a chip in a
+   .pf-v5-l-level layout) — same unpinned pattern, but scoped to exclude
+   PatternFly's colored semantic variants (green/red/blue/etc.), which
+   carry their own intentional color and would lose meaning if forced to
+   our neutral palette like the chip background almost was. */
+.pf-v5-c-label:not(.pf-m-blue):not(.pf-m-green):not(.pf-m-red):not(.pf-m-orange):not(.pf-m-purple):not(.pf-m-gold):not(.pf-m-cyan) {
+  background-color: var(--hw-card-bg) !important;
+  color: var(--hw-text) !important;
+}
+.pf-v5-c-label:not(.pf-m-blue):not(.pf-m-green):not(.pf-m-red):not(.pf-m-orange):not(.pf-m-purple):not(.pf-m-gold):not(.pf-m-cyan):before {
+  border-color: var(--hw-border) !important;
+}
+.pf-v5-c-page__main .pf-v5-c-button:disabled,
+.pf-v5-c-page__main .pf-v5-c-button.pf-m-disabled,
+.pf-v5-c-page__main .pf-v5-c-button.pf-m-aria-disabled {
+  color: var(--hw-text-disabled) !important;
+  background-color: transparent !important;
+}
+
+.pf-v5-c-button.pf-m-primary {
+  background-color: var(--hw-primary) !important;
+  border-color: var(--hw-primary) !important;
+  color: #ffffff !important;
+}
+.pf-v5-c-button.pf-m-primary:hover {
+  background-color: var(--hw-primary-hover) !important;
+  border-color: var(--hw-primary-hover) !important;
+}
+
+/* Deliberately NOT styling `a` globally — same reasoning as account.css. */

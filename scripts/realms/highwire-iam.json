@@ -1,0 +1,20 @@
+{
+  "realm": "highwire-iam",
+  "enabled": true,
+  "displayName": "HighWire IAM service",
+  "roles": {
+    "realm": [
+      { "name": "cross-realm-admin", "description": "Granted to the iam-service client's service account; delegated realm-admin rights into every publisher realm are configured separately per realm, not stored here (see MULTI-TENANT-KEYCLOAK-IAM-PLAN.md §2)." }
+    ]
+  },
+  "clients": [
+    {
+      "clientId": "iam-service",
+      "publicClient": false,
+      "serviceAccountsEnabled": true,
+      "standardFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "secret": "CHANGE_ME_IN_EVERY_NON_LOCAL_ENVIRONMENT"
+    }
+  ]
+}

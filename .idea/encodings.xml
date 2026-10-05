@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="Encoding">
+    <file url="file://$PROJECT_DIR$/iam/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/kc-themes-extracted/META-INF/maven/org.keycloak/keycloak-themes/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/kc-themes-extracted/META-INF/maven/org.keycloak/keycloak-themes/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/kc-themes-extracted/META-INF/maven/org.keycloak/keycloak-themes/src/main/resources-community" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/providers/highwire-keycloak-mapper/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/providers/highwire-keycloak-mapper/src/main/resources" charset="UTF-8" />
+  </component>
+</project>

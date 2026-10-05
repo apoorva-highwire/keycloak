@@ -1,0 +1,16 @@
+/*
+ * Mirrors ../../../login/resources/css/publisher-overrides.css — Keycloak's
+ * login and account themes resolve resources separately even under the same
+ * theme name, so this is a deliberate duplicate. Keep the two files' values
+ * identical for a given publisher (only the subset account.css actually
+ * uses is repeated here).
+ *
+ * --hw-primary deliberately NOT overridden — same reasoning as the login
+ * override: the "Sign in"/primary button stays a constant dark navy across
+ * every publisher, only the masthead/hero color changes.
+ */
+
+:root {
+  --hw-header-bg: #0b3d4a;
+  --hw-header-fg: #ffffff;
+}

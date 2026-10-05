@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>org.highwire</groupId>
+  <artifactId>iam-service</artifactId>
+  <version>0.1.0</version>
+  <packaging>jar</packaging>
+
+  <!--
+    Stateless by design — Keycloak itself is the only store (realms,
+    client/user attributes); no JPA, no Postgres, no iam-db. This service
+    is a thin orchestrator over Keycloak's own Admin REST API, nothing
+    more, which is what keeps the dependency list this short.
+  -->
+
+  <parent>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-parent</artifactId>
+    <!-- Confirmed current GA via Maven Central before pinning (not
+         guessed) — see the earlier iam-service for the same check. -->
+    <version>4.1.1</version>
+    <relativePath/>
+  </parent>
+
+  <properties>
+    <java.version>21</java.version>
+    <maven.compiler.source>21</maven.compiler.source>
+    <maven.compiler.target>21</maven.compiler.target>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <!-- keycloak-admin-client tops out at 26.0.12 (confirmed against Maven
+         Central — it hasn't kept pace with the server's faster 26.x
+         release cadence, unlike keycloak-server-spi which does publish
+         26.8.0). Fine to run against our 26.8.0 server: the Admin REST
+         API itself is stable across these minor versions. -->
+    <keycloak-admin-client.version>26.0.12</keycloak-admin-client.version>
+    <!-- Confirmed via springdoc.org's own compatibility matrix: v3.x
+         targets Spring Boot 4 / Spring Framework 7 / Jakarta EE; v2.x is
+         the Spring Boot 3 line. Not guessed. -->
+    <springdoc.version>3.1.1</springdoc.version>
+  </properties>
+
+  <dependencies>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-web</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-validation</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-actuator</artifactId>
+    </dependency>
+    <dependency>
+      <!-- Exposes /actuator/prometheus — Micrometer's Prometheus
+           registry, the one piece Grafana dashboard 17175 ("Spring Boot
+           Observability") actually requires as its metrics source. -->
+      <groupId>io.micrometer</groupId>
+      <artifactId>micrometer-registry-prometheus</artifactId>
+    </dependency>
+    <dependency>
+      <!-- The one real dependency this service exists for: calling
+           Keycloak's Admin REST API (create realms, clients, roles, push
+           user/client attributes) instead of hand-rolling those HTTP
+           calls. -->
+      <groupId>org.keycloak</groupId>
+      <artifactId>keycloak-admin-client</artifactId>
+      <version>${keycloak-admin-client.version}</version>
+    </dependency>
+    <dependency>
+      <!-- Swagger UI + the OpenAPI spec itself, generated from the
+           controllers/DTOs below rather than hand-written. -->
+      <groupId>org.springdoc</groupId>
+      <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+      <version>${springdoc.version}</version>
+    </dependency>
+    <dependency>
+      <!-- Request-correlation filter, Loggers utility, and caller
+           (publisher/journal/scope) resolution from the validated token
+           — see ../auth-sdk. Also brings Spring Security's resource-
+           server + multi-issuer trust, since resolving who called needs
+           a validated token. -->
+      <groupId>org.highwire</groupId>
+      <artifactId>auth-sdk</artifactId>
+      <version>0.1.0</version>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-test</artifactId>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-maven-plugin</artifactId>
+      </plugin>
+    </plugins>
+  </build>
+</project>

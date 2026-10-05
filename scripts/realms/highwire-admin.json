@@ -1,0 +1,26 @@
+{
+  "realm": "highwire-admin",
+  "enabled": true,
+  "displayName": "HighWire Staff Admin",
+  "loginTheme": "hw-base",
+  "accountTheme": "hw-base",
+  "adminTheme": "hw-base",
+  "emailTheme": "hw-base",
+  "roles": {
+    "realm": [
+      { "name": "super-admin", "description": "Full cross-realm access via the IAM service; can act within any publisher realm." },
+      { "name": "support-staff", "description": "Read/limited-write access to publisher accounts for support tickets, no billing or realm-config access." },
+      { "name": "billing-admin", "description": "Manage subscriptions/entitlements across publishers; no user-data access." }
+    ]
+  },
+  "clients": [
+    {
+      "clientId": "highwire-admin-console",
+      "publicClient": true,
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": false,
+      "redirectUris": ["http://localhost:8081/admin/highwire-admin/console/*"],
+      "webOrigins": ["+"]
+    }
+  ]
+}

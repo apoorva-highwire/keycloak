@@ -1,0 +1,31 @@
+/*
+ * Example publisher theme — redefines only the CSS custom properties
+ * declared in hw-base's css/login.css. This is the entire contract: a new
+ * publisher theme is a copy of this directory with these values changed
+ * (and a logo dropped into resources/img/), nothing else.
+ *
+ * Deliberately NOT overriding --hw-primary here: the reference design keeps
+ * the "Sign in" button a constant dark navy across every publisher
+ * regardless of that publisher's own hero color (a two-tone brand system —
+ * the hero/accent color is the publisher's identity, the button color is
+ * HighWire's own constant). Only the hero gradient, link color, and tile
+ * palette change per publisher.
+ *
+ * See themes/README.md for the step-by-step to add a real publisher.
+ */
+
+:root {
+  --hw-header-bg: #0b3d4a;
+  --hw-hero-to: #072a33;
+  --hw-header-fg: #ffffff;
+
+  --hw-link: #0b3d4a;
+
+  --hw-tile-bg: #eaf3f5;
+  --hw-tile-border: #cfe3e7;
+  --hw-tile-hover: #dcebee;
+  --hw-tile-fg: #1a2233;
+
+  --hw-logo-url: url("../img/logo.svg");
+  --hw-logo-width: 140px;
+}

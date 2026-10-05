@@ -1,0 +1,86 @@
+{
+  "realm": "bmj",
+  "enabled": true,
+  "displayName": "BMJ",
+  "loginTheme": "bmj",
+  "accountTheme": "bmj",
+  "emailTheme": "bmj",
+  "browserFlow": "browser",
+  "registrationFlow": "registration",
+  "roles": {
+    "realm": [
+      { "name": "reader", "description": "Can browse and read content the journal has made available to them." },
+      { "name": "author", "description": "Can submit and manage their own article submissions." },
+      { "name": "reviewer", "description": "Can view and respond to submissions assigned to them for review." },
+      { "name": "editor", "description": "Can manage the full editorial workflow for this journal." },
+      { "name": "publisher-admin", "description": "Full admin rights within this one publisher realm; does not cross into other realms (see MULTI-TENANT-KEYCLOAK-IAM-PLAN.md §1)." }
+    ]
+  },
+  "clients": [
+    {
+      "clientId": "reader-app",
+      "publicClient": true,
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": false,
+      "redirectUris": ["http://localhost:3000/*"],
+      "webOrigins": ["+"],
+      "protocolMappers": [
+        {
+          "name": "audience-reader-app",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "config": {
+            "included.client.audience": "reader-app",
+            "access.token.claim": "true"
+          }
+        },
+        {
+          "name": "realm-roles",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-realm-role-mapper",
+          "config": {
+            "claim.name": "realm_access.roles",
+            "jsonType.label": "String",
+            "multivalued": "true",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "userinfo.token.claim": "true"
+          }
+        },
+        {
+          "name": "journal-codes",
+          "protocol": "openid-connect",
+          "protocolMapper": "highwire-journal-codes-mapper",
+          "config": {
+            "user.attribute": "journal_codes",
+            "claim.name": "journal_codes",
+            "jsonType.label": "String",
+            "multivalued": "true",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "userinfo.token.claim": "true"
+          }
+        }
+      ]
+    }
+  ],
+  "identityProviders": [
+    {
+      "alias": "institution-sso",
+      "displayName": "Log in via your institution",
+      "providerId": "oidc",
+      "enabled": false,
+      "trustEmail": true,
+      "storeToken": false,
+      "firstBrokerLoginFlowAlias": "first broker login",
+      "config": {
+        "clientId": "CHANGE_ME_PER_INSTITUTION_FEDERATION",
+        "clientSecret": "CHANGE_ME_PER_INSTITUTION_FEDERATION",
+        "authorizationUrl": "https://CHANGE_ME/authorize",
+        "tokenUrl": "https://CHANGE_ME/token",
+        "useJwksUrl": "true",
+        "syncMode": "IMPORT"
+      }
+    }
+  ]
+}

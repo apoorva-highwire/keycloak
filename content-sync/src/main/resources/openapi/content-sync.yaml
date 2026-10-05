@@ -1,0 +1,52 @@
+openapi: 3.0.3
+info:
+  title: content-sync
+  version: 0.1.0
+  description: >
+    Entry path for content ingestion — same request shape as the real
+    impl/content-sync-poc's IngestController, kept consistent rather than
+    inventing a different one for this Gradle-based service.
+paths:
+  /ingest:
+    post:
+      operationId: ingest
+      summary: Ingest (create or update) content for a path
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/IngestRequest"
+      responses:
+        "200":
+          description: Accepted
+components:
+  schemas:
+    IngestRequest:
+      type: object
+      required:
+        - path
+        - peid
+        - corpus
+        - xml
+      properties:
+        path:
+          type: string
+          minLength: 1
+          pattern: "^/.*"
+          description: Atom path — must start with '/'.
+        peid:
+          type: string
+          minLength: 1
+        corpus:
+          type: string
+          minLength: 1
+        publisherId:
+          type: string
+        xml:
+          type: string
+          minLength: 1
+          description: Verbatim XML payload.
+        transactionId:
+          type: string
+          description: Caller-supplied tracking id — generated server-side if omitted.

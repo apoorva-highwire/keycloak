@@ -1,0 +1,9 @@
+# Gradle build output and local cache — never committed, same convention as every other
+# repo in this codebase for its own build-tool's output (target/ for Maven, this for Gradle).
+.gradle/
+build/
+
+# IDE / OS noise
+.idea/
+*.iml
+.DS_Store

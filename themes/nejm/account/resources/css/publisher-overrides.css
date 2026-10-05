@@ -1,0 +1,10 @@
+/*
+ * Mirrors ../../../login/resources/css/publisher-overrides.css — keep
+ * both files' values identical for this publisher. --hw-primary
+ * deliberately not overridden, same reasoning as the login override.
+ */
+
+:root {
+  --hw-header-bg: #7a1620;
+  --hw-header-fg: #ffffff;
+}

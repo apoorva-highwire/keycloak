@@ -1,0 +1,6 @@
+{
+  "library": "spring-mvc",
+  "modelPackage": "org.highwire.contentsync.generated.model",
+  "apiPackage": "org.highwire.contentsync.generated.api",
+  "invokerPackage": "org.highwire.contentsync.generated"
+}

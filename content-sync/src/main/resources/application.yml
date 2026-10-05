@@ -1,0 +1,29 @@
+server:
+  port: 8095
+
+spring:
+  application:
+    name: content-sync
+
+highwire:
+  auth:
+    # Internal Docker-network address — matches iam-service's own convention (see
+    # ../iam/src/main/resources/application.yml) once this service joins the same compose network.
+    keycloak-url: http://keycloak:8080
+    admin-realm: master
+    admin-client-id: content-sync
+    # No default, never hardcoded — same reasoning as iam-service's own secret handling:
+    # a plaintext value here would end up in git history the moment this repo is pushed.
+    admin-client-secret: ${KEYCLOAK_ADMIN_CLIENT_SECRET}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,prometheus
+
+logging:
+  level:
+    org.highwire: debug
+  pattern:
+    console: "%d{HH:mm:ss.SSS} [%X{requestId}] %-5level %logger{36} - %msg%n"

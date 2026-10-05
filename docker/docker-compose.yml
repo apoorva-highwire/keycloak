@@ -1,0 +1,204 @@
+# Pinned explicitly so the Compose project name doesn't depend on which
+# directory this file happens to live in (it moved from keycloak/ to
+# keycloak/docker/ once already) — without this, container names and
+# volume names would silently change on every folder move.
+name: keycloak
+
+services:
+  keycloak-db:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: keycloak
+      POSTGRES_USER: keycloak
+      POSTGRES_PASSWORD: keycloak
+    volumes:
+      - keycloak-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U keycloak"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  keycloak:
+    build:
+      # Context is the keycloak/ root (one level up from this docker/
+      # folder), not this folder itself — the Dockerfile's `COPY themes/`
+      # needs ../themes relative to where this compose file lives.
+      context: ..
+      dockerfile: docker/Dockerfile
+    command: start-dev
+    environment:
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://keycloak-db:5432/keycloak
+      KC_DB_USERNAME: keycloak
+      KC_DB_PASSWORD: keycloak
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+      # Fixed, not dynamic-from-Host-header — confirmed live that
+      # KC_HOSTNAME_STRICT: false alone makes Keycloak compute a
+      # DIFFERENT issuer per request depending on which Host header it
+      # arrived with (localhost:8081 vs the internal keycloak:8080 vs
+      # host.docker.internal:8081), and introspection rejects a token
+      # whenever the introspecting request's computed issuer doesn't
+      # match the token's own `iss` — breaking any caller that reaches
+      # Keycloak by a different route than whoever requested the token.
+      # Fixing the hostname means every caller gets the SAME issuer
+      # regardless of which address it actually used to connect.
+      #
+      # Full URL in KC_HOSTNAME itself, not the separate hostname-port
+      # sub-option — confirmed live that hostname-port is a deprecated
+      # "Hostname v1" setting Keycloak 26.8 logs a warning for and
+      # doesn't actually apply (the resulting issuer kept the container's
+      # own internal port 8080, not the externally-mapped 8081).
+      KC_HOSTNAME: http://localhost:8081
+      KC_HOSTNAME_STRICT: "false"
+      KC_HTTP_ENABLED: "true"
+      # Prometheus-format metrics on the management interface (confirmed
+      # live: /metrics on port 9000, NOT the main 8080 port) — scraped by
+      # the prometheus service over the internal docker network.
+      KC_METRICS_ENABLED: "true"
+    ports:
+      - "8081:8080" # avoid clashing with content-sync-poc's :8080
+      - "9000:9000" # management interface (metrics, health) — host-reachable for debugging
+    depends_on:
+      keycloak-db:
+        condition: service_healthy
+    volumes:
+      # Bind-mount themes over the built image so edits during local dev take
+      # effect on container restart without rebuilding. Drop this mount (and
+      # just use the image built by Dockerfile) for any non-local environment.
+      - ../themes:/opt/keycloak/themes
+
+  # Redis-protocol-compatible in-memory store — holds the cached UMA2
+  # authorization decisions (see auth-sdk's AuthorizationCheckService)
+  # so every iam-service/future-service instance shares one cache
+  # instead of each warming its own.
+  dragonfly:
+    image: docker.dragonflydb.io/dragonflydb/dragonfly:latest
+    ulimits:
+      memlock: -1
+    ports:
+      - "6379:6379"
+    volumes:
+      - dragonfly-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  iam-service:
+    build:
+      # keycloak/ root, not iam/ itself — the Dockerfile needs to also
+      # reach ../auth-sdk (the SDK iam-service depends on) from the same
+      # build context.
+      context: ..
+      dockerfile: iam/Dockerfile
+    # Every other value this service needs (keycloak.admin.server-url,
+    # highwire.auth.*, spring.data.redis.*) is still hardcoded in
+    # iam/src/main/resources/application.yml with the same docker-network
+    # addresses — only the one real secret is pulled from the environment
+    # instead, so it never lands in a file that gets committed to git.
+    environment:
+      # Set this in a local .env file (gitignored) before `docker compose
+      # up` — this is create-iam-client.sh's output for local dev. A real
+      # (non-local-dev) environment sources it from an actual secrets
+      # store instead.
+      KEYCLOAK_ADMIN_CLIENT_SECRET: ${KEYCLOAK_ADMIN_CLIENT_SECRET:?Set KEYCLOAK_ADMIN_CLIENT_SECRET in a local .env file — see create-iam-client.sh's output}
+    ports:
+      - "8090:8090"
+    depends_on:
+      keycloak:
+        condition: service_started
+      dragonfly:
+        condition: service_healthy
+
+  admin-ui:
+    build:
+      # admin-ui/ itself, not the keycloak/ root — it's a standalone
+      # Next.js app with its own package.json, no sibling module (like
+      # iam-service's ../auth-sdk) to reach from a wider context.
+      context: ../admin-ui
+    environment:
+      # Internal docker-network addresses — this server calls these
+      # itself (token exchange/refresh, iam-service API calls), never
+      # the user's own browser.
+      KEYCLOAK_URL: http://keycloak:8080
+      IAM_SERVICE_URL: http://iam-service:8090
+      # The user's own BROWSER is redirected here (login/logout) — must
+      # stay the externally-mapped address, never the internal hostname
+      # above, which the host machine's browser can't resolve.
+      KEYCLOAK_PUBLIC_URL: http://localhost:8081
+      # This container's OWN externally-mapped address — confirmed live
+      # that the standalone server's req.url reports the container's own
+      # hostname instead, which broke every browser-facing redirect
+      # (login's redirect_uri, the post-login landing page, logout)
+      # until routed through this instead. See lib/config.ts.
+      APP_PUBLIC_URL: http://localhost:3000
+      REALM: nejm
+      RESOURCE_SERVER_CLIENT_ID: nejm-journal-api
+      PUBLISHER_DISPLAY_NAME: NEJM Group
+      LOGIN_CLIENT_ID: drupal-client
+    ports:
+      - "3000:3000"
+    depends_on:
+      iam-service:
+        condition: service_started
+      keycloak:
+        condition: service_started
+
+  prometheus:
+    image: prom/prometheus:latest
+    volumes:
+      - ../observability/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    ports:
+      - "9090:9090"
+    depends_on:
+      iam-service:
+        condition: service_started
+      keycloak:
+        condition: service_started
+
+  loki:
+    image: grafana/loki:3.3.0
+    volumes:
+      - ../observability/loki/loki-config.yml:/etc/loki/local-config.yaml:ro
+      - loki-data:/loki
+    ports:
+      - "3100:3100"
+
+  promtail:
+    image: grafana/promtail:3.3.0
+    volumes:
+      - ../observability/promtail/promtail-config.yml:/etc/promtail/config.yml:ro
+      # Read-only access to the docker socket — how it discovers every
+      # container on this compose project (see promtail-config.yml's
+      # docker_sd_configs) without a per-service entry to maintain.
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    depends_on:
+      - loki
+
+  grafana:
+    image: grafana/grafana:11.3.0
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      # Local dev only — never reuse this value anywhere else; a real
+      # environment sets this from a secrets store, not compose.
+      GF_AUTH_ANONYMOUS_ENABLED: "false"
+    volumes:
+      - ../observability/grafana/provisioning:/etc/grafana/provisioning:ro
+      - grafana-data:/var/lib/grafana
+    ports:
+      - "3001:3000" # :3000 is admin-ui's — grafana gets :3001 on the host
+    depends_on:
+      - prometheus
+      - loki
+
+volumes:
+  keycloak-db-data:
+  dragonfly-data:
+  prometheus-data:
+  loki-data:
+  grafana-data:

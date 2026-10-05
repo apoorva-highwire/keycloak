@@ -1,0 +1,111 @@
+@import "tailwindcss";
+
+:root {
+  --bg: #faf7f5;
+  --surface: #ffffff;
+  --surface-muted: #f6f1ef;
+  --border: #e8ddd9;
+  --fg: #231417;
+  --fg-muted: #6b5c5f;
+  --accent: #6a1130;
+  --accent-strong: #4a0b22;
+  --accent-soft: #f3e3e7;
+  --accent-fg: #ffffff;
+  --good: #1a7f4e;
+  --good-soft: #e5f5ec;
+  --bad: #b3261e;
+  --bad-soft: #fbe9e7;
+  --warn: #8a6300;
+  --warn-soft: #fbf1d8;
+  --sidebar-bg: #2a0e18;
+  --sidebar-fg: #f3e7e9;
+  --sidebar-fg-muted: #c9a8af;
+  --sidebar-active: #4a0b22;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #15100f;
+    --surface: #1d1615;
+    --surface-muted: #241b1a;
+    --border: #3a2a28;
+    --fg: #f3ece9;
+    --fg-muted: #b19d98;
+    --accent: #e0597a;
+    --accent-strong: #ef7b96;
+    --accent-soft: #3a1420;
+    --accent-fg: #1d1615;
+    --good: #5fd699;
+    --good-soft: #10291d;
+    --bad: #ff8a80;
+    --bad-soft: #341414;
+    --warn: #e8c468;
+    --warn-soft: #302405;
+    --sidebar-bg: #0e0909;
+    --sidebar-fg: #f3e7e9;
+    --sidebar-fg-muted: #9c8a86;
+    --sidebar-active: #3a1420;
+  }
+}
+
+:root[data-theme="dark"] {
+  --bg: #15100f;
+  --surface: #1d1615;
+  --surface-muted: #241b1a;
+  --border: #3a2a28;
+  --fg: #f3ece9;
+  --fg-muted: #b19d98;
+  --accent: #e0597a;
+  --accent-strong: #ef7b96;
+  --accent-soft: #3a1420;
+  --accent-fg: #1d1615;
+  --good: #5fd699;
+  --good-soft: #10291d;
+  --bad: #ff8a80;
+  --bad-soft: #341414;
+  --warn: #e8c468;
+  --warn-soft: #302405;
+  --sidebar-bg: #0e0909;
+  --sidebar-fg: #f3e7e9;
+  --sidebar-fg-muted: #9c8a86;
+  --sidebar-active: #3a1420;
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-muted: var(--surface-muted);
+  --color-border: var(--border);
+  --color-fg: var(--fg);
+  --color-fg-muted: var(--fg-muted);
+  --color-accent: var(--accent);
+  --color-accent-strong: var(--accent-strong);
+  --color-accent-soft: var(--accent-soft);
+  --color-accent-fg: var(--accent-fg);
+  --color-good: var(--good);
+  --color-good-soft: var(--good-soft);
+  --color-bad: var(--bad);
+  --color-bad-soft: var(--bad-soft);
+  --color-warn: var(--warn);
+  --color-warn-soft: var(--warn-soft);
+  --color-sidebar-bg: var(--sidebar-bg);
+  --color-sidebar-fg: var(--sidebar-fg);
+  --color-sidebar-fg-muted: var(--sidebar-fg-muted);
+  --color-sidebar-active: var(--sidebar-active);
+  --font-display: var(--font-source-serif), Georgia, serif;
+  --font-sans: var(--font-inter), system-ui, sans-serif;
+}
+
+body {
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-sans);
+}
+
+.font-display {
+  font-family: var(--font-display);
+}
+
+.tabular {
+  font-variant-numeric: tabular-nums;
+}

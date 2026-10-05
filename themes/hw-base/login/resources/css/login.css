@@ -1,0 +1,749 @@
+/*
+ * HighWire base login theme — matches the reference PRS login design:
+ * full-bleed maroon marketing panel on the left (headline, tagline, "Visit
+ * Journal" button, For Authors / For Reviewers info cards) with a floating
+ * white card on the right (logo, form, secondary actions), a thin dark top
+ * bar, and a page-level footer bar.
+ *
+ * Structural markup for the marketing panel/footer lives in
+ * ../../template.ftl (a deliberate, verified override of Keycloak's real
+ * base template.ftl — see that file's header comment). This stylesheet is
+ * still the single place every color/type choice lives, so a publisher
+ * theme only needs to redefine these --hw-* variables (see
+ * ../../../publisher-example/login/resources/css/publisher-overrides.css).
+ */
+
+@import url("https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Inter:wght@400;500;600;700&display=swap");
+
+:root {
+  /* Login theme has no PatternFly dark-mode class to fight (it's the
+     classic login-pf theme, not the admin console's React bundle), but
+     native browser chrome — autofill highlighting, scrollbars — still
+     reads prefers-color-scheme directly regardless of theme. This is a
+     fixed-light brand design, so opt out of that rather than let it leak
+     through on a dark-mode OS. */
+  color-scheme: light;
+
+  --hw-font-display: "Fraunces", Georgia, "Times New Roman", serif;
+  --hw-font-body: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+
+  /* Marketing (left) panel */
+  --hw-header-bg: #6a1130;
+  --hw-hero-to: #591029;
+  --hw-header-fg: #ffffff;
+  --hw-hero-fg-muted: rgba(255, 255, 255, 0.82);
+  --hw-topbar-bg: #19141a;
+
+  /* Neutrals */
+  --hw-surface: #f5f7fb;
+  --hw-card-bg: #ffffff;
+  --hw-text: #1a2233;
+  --hw-text-muted: #5b6472;
+  --hw-border: #e1e5ec;
+
+  /* Primary action (Sign in) — dark navy, distinct from the maroon brand color */
+  --hw-primary: #121a2e;
+  --hw-primary-hover: #1d2a47;
+  --hw-primary-active: #0a0f1c;
+  --hw-primary-fg: #ffffff;
+  --hw-focus-ring: rgba(18, 26, 46, 0.22);
+
+  --hw-link: #6a1130;
+
+  --hw-tile-bg: #faf2f4;
+  --hw-tile-border: #e9d3da;
+  --hw-tile-hover: #f3e3e7;
+  --hw-tile-fg: #1a2233;
+
+  --hw-input-border: #c7cedb;
+  --hw-input-radius: 8px;
+  --hw-card-radius: 20px;
+
+  --hw-error-bg: #fdecea;
+  --hw-error-border: #e21a23;
+  --hw-error-fg: #8a1217;
+
+  --hw-success: #006838;
+
+  --hw-divider: #e1e5ec;
+
+  --hw-logo-url: url("../img/highwire-logo.png");
+  --hw-logo-width: 150px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+  /* Covers any area outside body's own box — mobile overscroll/rubber-band
+     regions, or a rounding gap once body's height becomes content-driven
+     on narrow screens (see the 1024px media query) — so it's never the
+     browser/Keycloak's unstyled default (black) showing through. */
+  background-color: var(--hw-surface);
+  /* Belt-and-suspenders against any element (like the alert icon that
+     caused real x-overflow) forcing itself wider than the viewport —
+     explicit on both axes/both elements regardless of what the mobile
+     media query below changes for overflow-y. */
+  overflow-x: hidden;
+}
+
+body {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden; /* no x or y scroll — see note in login.ftl / README */
+  font-family: var(--hw-font-body) !important;
+  color: var(--hw-text);
+  background-color: var(--hw-surface);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* PatternFly's own base stylesheets (loaded before this file) set
+   font-family explicitly on several component classes, which — because an
+   element's OWN declared font-family always wins over an inherited one,
+   regardless of load order — silently overrides the body rule above on
+   inputs/buttons/labels. Force every element back to the body's font
+   (Inter) except where we explicitly want the display face (Fraunces). */
+* {
+  font-family: inherit !important;
+}
+#kc-page-title,
+.hw-marketing-headline {
+  font-family: var(--hw-font-display) !important;
+}
+
+/* ============== TOP BAR ============== */
+
+.hw-topbar {
+  flex: 0 0 auto;
+  height: 5px;
+  background: var(--hw-topbar-bg);
+}
+
+/* ============== PAGE ROW — marketing panel (left) + card (right) ============== */
+
+.login-pf-page {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+  background: linear-gradient(160deg, var(--hw-header-bg) 0%, var(--hw-hero-to) 100%);
+  position: relative;
+}
+
+.login-pf-page::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(rgba(255, 255, 255, 0.06) 1.5px, transparent 1.5px);
+  background-size: 28px 28px;
+  pointer-events: none;
+}
+
+/* ============== MARKETING PANEL ============== */
+
+#kc-header.login-pf-page-header {
+  flex: 1 1 50%;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 5vw;
+  background: transparent;
+  position: relative;
+  z-index: 1;
+  overflow: hidden;
+}
+
+.hw-marketing-panel {
+  max-width: 480px;
+  width: 100%;
+}
+
+.hw-marketing-headline {
+  font-family: var(--hw-font-display);
+  font-weight: 600;
+  font-size: clamp(26px, 3vw, 36px);
+  line-height: 1.2;
+  color: var(--hw-header-fg);
+  margin: 0 0 16px;
+  text-wrap: balance;
+}
+
+.hw-marketing-tagline {
+  font-size: 15.5px;
+  line-height: 1.6;
+  color: var(--hw-hero-fg-muted);
+  margin: 0 0 24px;
+  max-width: 48ch;
+}
+
+.hw-journal-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 22px;
+  border: 1.5px solid rgba(255, 255, 255, 0.7);
+  border-radius: 999px;
+  color: var(--hw-header-fg) !important;
+  font-weight: 600;
+  font-size: 14px;
+  text-decoration: none !important;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+.hw-journal-link:hover {
+  background-color: rgba(255, 255, 255, 0.12);
+  border-color: #ffffff;
+}
+
+.hw-info-cards {
+  display: flex;
+  gap: 14px;
+  margin-top: 28px;
+  flex-wrap: wrap;
+}
+
+/* Platform-level fallback (template.ftl's #else) — shown when no
+   journal-specific client attributes are configured */
+.hw-capability-pills {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  margin: 28px 0 0;
+  padding: 0;
+}
+.hw-capability-pills li {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  color: var(--hw-header-fg);
+  font-size: 12.5px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  padding: 7px 14px;
+  border-radius: 999px;
+}
+
+.hw-info-card {
+  flex: 1 1 200px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 10px;
+  padding: 16px 18px;
+}
+
+.hw-info-card-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--hw-header-fg);
+  font-weight: 700;
+  font-size: 14px;
+  margin-bottom: 10px;
+}
+.hw-info-card-title svg {
+  flex: 0 0 auto;
+  opacity: 0.9;
+}
+
+.hw-info-card a {
+  display: block;
+  color: var(--hw-hero-fg-muted) !important;
+  font-size: 13.5px;
+  text-decoration: none !important;
+  margin-top: 6px;
+}
+.hw-info-card a:hover {
+  color: #ffffff !important;
+  text-decoration: underline !important;
+}
+
+/* ============== FORM CARD ============== */
+
+.card-pf {
+  flex: 1 1 50%;
+  min-height: 0;
+  max-height: calc(100% - 32px);
+  width: 100%;
+  max-width: 440px;
+  margin: 16px 5vw;
+  background: var(--hw-card-bg);
+  border-radius: var(--hw-card-radius);
+  box-shadow: 0 24px 60px rgba(10, 10, 20, 0.28);
+  padding: 40px 44px 36px;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  position: relative;
+  z-index: 1;
+}
+/* hide the card's own scrollbar visually while still allowing it as a safety
+   net on very short viewports — the "no scroll" request is honored for the
+   page itself (html/body), this is a last-resort for the card only */
+.card-pf::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+}
+.card-pf {
+  scrollbar-width: none;
+}
+
+.login-pf-header {
+  background: transparent;
+  margin-bottom: 4px;
+}
+
+.hw-card-logo {
+  width: var(--hw-logo-width);
+  height: 40px;
+  background-image: var(--hw-logo-url);
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: left center;
+  margin-bottom: 18px;
+}
+
+#kc-page-title {
+  font-family: var(--hw-font-display);
+  font-weight: 600;
+  font-size: 24px;
+  color: var(--hw-text);
+  margin: 0 0 20px;
+  text-wrap: balance;
+}
+
+#kc-content,
+#kc-content-wrapper,
+#kc-form,
+#kc-form-wrapper {
+  width: 100%;
+}
+
+/* ============== FORM FIELDS ============== */
+
+.form-group {
+  margin-bottom: 16px;
+}
+.form-group:last-child {
+  margin-bottom: 0;
+}
+
+.pf-c-form__label,
+.pf-c-form__label-text,
+label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--hw-text);
+  margin-bottom: 6px;
+  letter-spacing: 0.01em;
+}
+
+.hw-required {
+  color: var(--hw-error-border);
+  margin-left: 2px;
+  font-weight: 700;
+}
+
+.pf-c-form-control,
+input.form-control,
+input[type="text"],
+input[type="password"],
+input[type="email"] {
+  width: 100%;
+  border: 1px solid var(--hw-input-border);
+  border-radius: var(--hw-input-radius);
+  padding: 10px 12px;
+  font-size: 14px;
+  font-family: var(--hw-font-body);
+  color: var(--hw-text);
+  background-color: #ffffff;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.pf-c-form-control:focus,
+input.form-control:focus,
+input[type="text"]:focus,
+input[type="password"]:focus,
+input[type="email"]:focus {
+  outline: none;
+  border-color: var(--hw-primary);
+  box-shadow: 0 0 0 3px var(--hw-focus-ring);
+}
+
+input:user-invalid,
+input[aria-invalid="true"] {
+  border-color: var(--hw-error-border);
+}
+input:user-invalid:focus,
+input[aria-invalid="true"]:focus {
+  box-shadow: 0 0 0 3px rgba(226, 26, 35, 0.16);
+}
+
+/* Password field + show/hide toggle */
+.hw-password-field {
+  position: relative;
+}
+.hw-password-field input {
+  padding-right: 40px;
+}
+.hw-password-toggle {
+  position: absolute;
+  right: 4px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  color: var(--hw-text-muted);
+  cursor: pointer;
+  border-radius: 6px;
+}
+.hw-password-toggle:hover {
+  color: var(--hw-text);
+  background: var(--hw-surface);
+}
+.hw-password-toggle--visible {
+  color: var(--hw-primary);
+}
+
+.login-pf-settings {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 13px;
+}
+.login-pf-settings label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 400;
+  margin: 0;
+}
+
+/* ============== BUTTONS ============== */
+
+.pf-c-button.pf-m-primary,
+input[type="submit"],
+#kc-login,
+button.btn-primary {
+  width: 100%;
+  background-color: var(--hw-primary);
+  border: 1px solid var(--hw-primary);
+  color: var(--hw-primary-fg);
+  border-radius: var(--hw-input-radius);
+  font-family: var(--hw-font-body);
+  font-weight: 600;
+  font-size: 14px;
+  padding: 11px 16px;
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease, transform 0.05s ease;
+}
+.pf-c-button.pf-m-primary:hover,
+button.btn-primary:hover {
+  background-color: var(--hw-primary-hover);
+  border-color: var(--hw-primary-hover);
+}
+.pf-c-button.pf-m-primary:active,
+button.btn-primary:active {
+  background-color: var(--hw-primary-active);
+  border-color: var(--hw-primary-active);
+  transform: translateY(1px);
+}
+.pf-c-button.pf-m-primary:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--hw-focus-ring);
+}
+
+#kc-form-buttons {
+  margin-top: 20px;
+}
+
+.hw-secondary-button {
+  display: block;
+  width: 100%;
+  text-align: center;
+  background-color: #ffffff;
+  border: 1px solid var(--hw-input-border);
+  color: var(--hw-text) !important;
+  border-radius: var(--hw-input-radius);
+  font-weight: 600;
+  font-size: 14px;
+  padding: 11px 16px;
+  text-decoration: none !important;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+.hw-secondary-button:hover {
+  background-color: var(--hw-surface);
+  border-color: var(--hw-text-muted);
+}
+
+/* ============== SOCIAL / IDENTITY-PROVIDER BUTTONS ============== */
+
+.hw-social-providers {
+  margin-top: 20px;
+}
+.hw-social-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+.hw-social-divider::before,
+.hw-social-divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--hw-divider);
+}
+.hw-social-divider span {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--hw-text-muted);
+  white-space: nowrap;
+}
+.hw-social-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.hw-social-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 10px 16px;
+  border: 1px solid var(--hw-input-border);
+  border-radius: var(--hw-input-radius);
+  background: #ffffff;
+  color: var(--hw-text) !important;
+  font-weight: 500;
+  font-size: 13.5px;
+  text-decoration: none !important;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+.hw-social-button:hover {
+  background-color: var(--hw-surface);
+  border-color: var(--hw-text-muted);
+}
+
+/* ============== ACCESS-METHOD TILES (institution SSO) ============== */
+
+.hw-access-methods {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--hw-divider);
+}
+
+.hw-access-tile {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background-color: var(--hw-tile-bg);
+  border: 1px solid var(--hw-tile-border);
+  color: var(--hw-tile-fg);
+  text-decoration: none;
+  font-size: 13.5px;
+  font-weight: 500;
+  padding: 11px 14px;
+  border-radius: var(--hw-input-radius);
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+.hw-access-tile::before {
+  content: "";
+  width: 16px;
+  height: 16px;
+  flex: 0 0 auto;
+  background-color: var(--hw-primary);
+  -webkit-mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path d='M4 19h16M6 19V9.5L12 6l6 3.5V19M9 19v-5h6v5' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/></svg>") center / contain no-repeat;
+  mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path d='M4 19h16M6 19V9.5L12 6l6 3.5V19M9 19v-5h6v5' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/></svg>") center / contain no-repeat;
+}
+.hw-access-tile:hover {
+  background-color: var(--hw-tile-hover);
+}
+.hw-access-tile:active {
+  background-color: var(--hw-tile-hover);
+  transform: translateY(1px);
+}
+
+/* ============== LINKS ============== */
+
+a {
+  color: var(--hw-link);
+  text-decoration: none;
+  font-weight: 500;
+}
+a:hover {
+  text-decoration: underline;
+}
+
+/* ============== ERRORS / ALERTS ============== */
+
+/* The status icon (.pf-c-alert__icon) had its own fixed intrinsic sizing
+   that didn't shrink with the rest of the alert, forcing it (and the card
+   around it) wider than the viewport on narrow screens — the x-overflow on
+   mobile. Simplest fix: drop the icon entirely, message text only. */
+.pf-c-alert.pf-m-danger,
+.alert-error,
+.alert-danger,
+.kc-feedback-text {
+  background-color: var(--hw-error-bg);
+  border: 1px solid var(--hw-error-border);
+  box-shadow: none;
+  color: var(--hw-error-fg);
+  border-radius: var(--hw-input-radius);
+  padding: 12px 14px;
+  font-size: 13.5px;
+  margin-bottom: 16px;
+}
+.pf-c-alert__icon {
+  display: none;
+}
+.pf-c-form__helper-text.pf-m-error,
+.help-block {
+  color: var(--hw-error-border);
+  font-size: 12.5px;
+  margin-top: 4px;
+  display: block;
+}
+
+/* ============== CUSTOM MESSAGE BANNER (optional, per-client) ============== */
+
+.hw-custom-message {
+  background: var(--hw-tile-bg);
+  border: 1px solid var(--hw-tile-border);
+  border-radius: var(--hw-input-radius);
+  padding: 10px 14px;
+  font-size: 13px;
+  color: var(--hw-text);
+  margin-bottom: 16px;
+}
+
+/* ============== PAGE-LEVEL FOOTER ============== */
+
+.hw-page-footer {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 5vw;
+  background: var(--hw-hero-to);
+  flex-wrap: wrap;
+}
+.hw-page-footer-links {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+.hw-page-footer-links a {
+  color: var(--hw-hero-fg-muted) !important;
+  font-size: 12.5px;
+  font-weight: 500;
+  text-decoration: none !important;
+}
+.hw-page-footer-links a:hover {
+  color: #ffffff !important;
+  text-decoration: underline !important;
+}
+.hw-page-footer-copy {
+  color: var(--hw-hero-fg-muted);
+  font-size: 12px;
+}
+
+/* ============== RESPONSIVE — stack on narrow screens ============== */
+
+/* ============== RESPONSIVE — tablet and mobile ==============
+ * Below the tablet breakpoint the 50/50 row becomes a single column, and
+ * — per request — the ORDER REVERSES: the login form appears first, with
+ * the marketing/tagline panel below it. column-reverse does this with no
+ * markup change: #kc-header comes first in the real DOM (fixed by
+ * Keycloak's template.ftl, not ours to reorder), .card-pf comes second, so
+ * reversing the column puts .card-pf (the form) on top visually. */
+
+@media (max-width: 1024px) {
+  html {
+    height: auto;
+    min-height: 100%;
+  }
+  body {
+    overflow-y: auto;
+    height: auto;
+    min-height: 100vh;
+  }
+  .login-pf-page {
+    flex-direction: column-reverse;
+    align-items: stretch;
+    height: auto;
+    overflow-x: hidden;
+    overflow-y: visible;
+  }
+  #kc-header.login-pf-page-header {
+    flex: 0 0 auto;
+    padding: 36px 6vw 44px;
+  }
+  .hw-marketing-panel {
+    max-width: 560px;
+    margin: 0 auto;
+  }
+  .card-pf {
+    flex: 0 0 auto;
+    max-width: 480px;
+    max-height: none;
+    margin: 28px auto 0;
+  }
+}
+
+@media (max-width: 640px) {
+  #kc-header.login-pf-page-header {
+    padding: 28px 24px 36px;
+  }
+  .hw-marketing-headline {
+    font-size: 26px;
+  }
+  .hw-info-cards {
+    flex-direction: column;
+  }
+  .card-pf {
+    margin: 0;
+    max-width: none;
+    padding: 32px 24px 28px;
+  }
+  .hw-page-footer {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 16px 24px;
+  }
+}
+
+@media (max-width: 400px) {
+  .hw-marketing-headline {
+    font-size: 22px;
+  }
+  .hw-capability-pills li {
+    font-size: 11.5px;
+    padding: 6px 11px;
+  }
+  .card-pf {
+    padding: 26px 18px 24px;
+  }
+}

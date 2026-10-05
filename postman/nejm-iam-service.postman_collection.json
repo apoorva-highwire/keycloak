@@ -1,0 +1,290 @@
+{
+  "info": {
+    "name": "NEJM IAM Service — Full API",
+    "description": "Every real endpoint iam-service exposes, organized by controller. Collection-level OAuth 2.0 (Authorization Code) is set up so hitting 'Get New Access Token' on the collection opens the REAL nejm realm login page (Keycloak itself, NEJM-themed) and every request below inherits the resulting token automatically — no per-request auth needed.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "oauth2",
+    "oauth2": [
+      { "key": "grant_type", "value": "authorization_code", "type": "string" },
+      { "key": "authUrl", "value": "{{keycloakUrl}}/realms/{{realm}}/protocol/openid-connect/auth", "type": "string" },
+      { "key": "accessTokenUrl", "value": "{{keycloakUrl}}/realms/{{realm}}/protocol/openid-connect/token", "type": "string" },
+      { "key": "clientId", "value": "{{loginClientId}}", "type": "string" },
+      { "key": "clientSecret", "value": "", "type": "string" },
+      { "key": "redirect_uri", "value": "https://oauth.pstmn.io/v1/callback", "type": "string" },
+      { "key": "scope", "value": "openid", "type": "string" },
+      { "key": "state", "value": "nejm-postman", "type": "string" },
+      { "key": "client_authentication", "value": "body", "type": "string" },
+      { "key": "addTokenTo", "value": "header", "type": "string" },
+      { "key": "tokenName", "value": "nejm realm-admin token", "type": "string" },
+      { "key": "useBrowser", "value": true, "type": "boolean" }
+    ]
+  },
+  "variable": [
+    { "key": "keycloakUrl", "value": "http://localhost:8081" },
+    { "key": "iamServiceUrl", "value": "http://localhost:8090" },
+    { "key": "realm", "value": "nejm" },
+    { "key": "clientId", "value": "nejm-journal-api" },
+    { "key": "loginClientId", "value": "drupal-client" },
+    { "key": "journalCode", "value": "nejm-core" },
+    { "key": "username", "value": "nejm-core-reader" },
+    { "key": "groupName", "value": "nejm-core-subscribers" },
+    { "key": "roleName", "value": "nejm-core-read" },
+    { "key": "resourceName", "value": "nejm-core-articles" },
+    { "key": "policyName", "value": "nejm-core-readers" },
+    { "key": "permissionName", "value": "nejm-core-articles-read-perm" }
+  ],
+  "item": [
+    {
+      "name": "Realm Journals",
+      "item": [
+        {
+          "name": "List declared journals",
+          "request": {
+            "method": "GET",
+            "url": "{{iamServiceUrl}}/api/v1/realms/{{realm}}/journals",
+            "description": "JOURNAL-scoped caller sees only its own journal; PUBLISHER/SERVICE sees the full list — enforced server-side."
+          }
+        },
+        {
+          "name": "Replace declared journals (publisher-only)",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{iamServiceUrl}}/api/v1/realms/{{realm}}/journals",
+            "body": { "mode": "raw", "raw": "{\n  \"journals\": [\"nejm-core\", \"nejm-catalyst\"]\n}" },
+            "description": "403s for a journal-scoped login."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Users",
+      "item": [
+        {
+          "name": "List users",
+          "request": {
+            "method": "GET",
+            "url": "{{iamServiceUrl}}/api/v1/realms/{{realm}}/users?page=1&size=20",
+            "description": "Add &journalCode={{journalCode}} to filter — ignored/overridden for a JOURNAL-scoped caller, who always sees only its own journal's users."
+          }
+        },
+        {
+          "name": "Get user's access (groups/roles)",
+          "request": {
+            "method": "GET",
+            "url": "{{iamServiceUrl}}/api/v1/realms/{{realm}}/users/{{username}}/access",
+            "description": "403s for a journal-scoped caller — publisher-level only."
+          }
+        },
+        {
+          "name": "Add user to group",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{iamServiceUrl}}/api/v1/realms/{{realm}}/users/{{username}}/groups",
+            "body": { "mode": "raw", "raw": "{\n  \"groupName\": \"{{groupName}}\"\n}" },
+            "description": "403s for a journal-scoped caller."
+          }
+        },
+        {
+          "name": "Remove user from group",
+          "request": {
+            "method": "DELETE",
+            "url": "{{iamServiceUrl}}/api/v1/realms/{{realm}}/users/{{username}}/groups/{{groupName}}"
+          }
+        },
+        {
+          "name": "Assign role directly to user",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{iamServiceUrl}}/api/v1/realms/{{realm}}/users/{{username}}/roles",
+            "body": { "mode": "raw", "raw": "{\n  \"roleName\": \"{{roleName}}\"\n}" },
+            "description": "The exception — groups are the intended path. 403s for a journal-scoped caller."
+          }
+        },
+        {
+          "name": "Remove direct role from user",
+          "request": {
+            "method": "DELETE",
+            "url": "{{iamServiceUrl}}/api/v1/realms/{{realm}}/users/{{username}}/roles/{{roleName}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Roles",
+      "item": [
+        {
+          "name": "Create role",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{iamServiceUrl}}/api/v1/realms/{{realm}}/roles",
+            "body": { "mode": "raw", "raw": "{\n  \"name\": \"nejm-insight-read\",\n  \"description\": \"Read access to nejm-insight's content.\"\n}" }
+          }
+        },
+        {
+          "name": "List roles",
+          "request": { "method": "GET", "url": "{{iamServiceUrl}}/api/v1/realms/{{realm}}/roles?page=1&size=20" }
+        },
+        {
+          "name": "Get role",
+          "request": { "method": "GET", "url": "{{iamServiceUrl}}/api/v1/realms/{{realm}}/roles/{{roleName}}" }
+        },
+        {
+          "name": "Delete role",
+          "request": { "method": "DELETE", "url": "{{iamServiceUrl}}/api/v1/realms/{{realm}}/roles/{{roleName}}" }
+        }
+      ]
+    },
+    {
+      "name": "Groups",
+      "item": [
+        {
+          "name": "Create group",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{iamServiceUrl}}/api/v1/realms/{{realm}}/groups",
+            "body": { "mode": "raw", "raw": "{\n  \"name\": \"{{groupName}}\"\n}" }
+          }
+        },
+        {
+          "name": "List groups",
+          "request": { "method": "GET", "url": "{{iamServiceUrl}}/api/v1/realms/{{realm}}/groups?page=1&size=20" }
+        },
+        {
+          "name": "Get group (with bundled roles)",
+          "request": { "method": "GET", "url": "{{iamServiceUrl}}/api/v1/realms/{{realm}}/groups/{{groupName}}" }
+        },
+        {
+          "name": "Delete group",
+          "request": { "method": "DELETE", "url": "{{iamServiceUrl}}/api/v1/realms/{{realm}}/groups/{{groupName}}" }
+        },
+        {
+          "name": "Bundle a role into group",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{iamServiceUrl}}/api/v1/realms/{{realm}}/groups/{{groupName}}/roles",
+            "body": { "mode": "raw", "raw": "{\n  \"roleName\": \"{{roleName}}\"\n}" }
+          }
+        },
+        {
+          "name": "Remove a role from group",
+          "request": {
+            "method": "DELETE",
+            "url": "{{iamServiceUrl}}/api/v1/realms/{{realm}}/groups/{{groupName}}/roles/{{roleName}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Resources (UMA2)",
+      "item": [
+        {
+          "name": "Create resource",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{iamServiceUrl}}/api/v1/realms/{{realm}}/clients/{{clientId}}/resources",
+            "body": { "mode": "raw", "raw": "{\n  \"name\": \"nejm-editorials\",\n  \"scopes\": [\"read\", \"write\"]\n}" }
+          }
+        },
+        {
+          "name": "List resources",
+          "request": { "method": "GET", "url": "{{iamServiceUrl}}/api/v1/realms/{{realm}}/clients/{{clientId}}/resources?page=1&size=20" }
+        },
+        {
+          "name": "Get resource",
+          "request": { "method": "GET", "url": "{{iamServiceUrl}}/api/v1/realms/{{realm}}/clients/{{clientId}}/resources/{{resourceName}}" }
+        },
+        {
+          "name": "Delete resource",
+          "request": { "method": "DELETE", "url": "{{iamServiceUrl}}/api/v1/realms/{{realm}}/clients/{{clientId}}/resources/{{resourceName}}" }
+        }
+      ]
+    },
+    {
+      "name": "Policies (UMA2)",
+      "item": [
+        {
+          "name": "Create role-based policy",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{iamServiceUrl}}/api/v1/realms/{{realm}}/clients/{{clientId}}/policies",
+            "body": { "mode": "raw", "raw": "{\n  \"name\": \"nejm-core-readers\",\n  \"roleNames\": [\"{{roleName}}\"]\n}" },
+            "description": "Satisfied if the caller holds ANY ONE of roleNames."
+          }
+        },
+        {
+          "name": "List policies",
+          "request": { "method": "GET", "url": "{{iamServiceUrl}}/api/v1/realms/{{realm}}/clients/{{clientId}}/policies?page=1&size=20" }
+        },
+        {
+          "name": "Get policy",
+          "request": { "method": "GET", "url": "{{iamServiceUrl}}/api/v1/realms/{{realm}}/clients/{{clientId}}/policies/{{policyName}}" }
+        },
+        {
+          "name": "Delete policy",
+          "request": { "method": "DELETE", "url": "{{iamServiceUrl}}/api/v1/realms/{{realm}}/clients/{{clientId}}/policies/{{policyName}}" }
+        }
+      ]
+    },
+    {
+      "name": "Permissions (UMA2)",
+      "item": [
+        {
+          "name": "Create scope permission",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{iamServiceUrl}}/api/v1/realms/{{realm}}/clients/{{clientId}}/permissions",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"nejm-core-articles-read-perm\",\n  \"resourceName\": \"{{resourceName}}\",\n  \"scopeNames\": [\"read\"],\n  \"policyNames\": [\"{{policyName}}\"]\n}"
+            },
+            "description": "decisionStrategy is always AFFIRMATIVE — any one assigned policy passing is enough."
+          }
+        },
+        {
+          "name": "List permissions",
+          "request": { "method": "GET", "url": "{{iamServiceUrl}}/api/v1/realms/{{realm}}/clients/{{clientId}}/permissions?page=1&size=20" }
+        },
+        {
+          "name": "List permissions granted to a role",
+          "request": {
+            "method": "GET",
+            "url": "{{iamServiceUrl}}/api/v1/realms/{{realm}}/clients/{{clientId}}/permissions?roleName={{roleName}}",
+            "description": "Every permission reachable through any policy that includes roleName — what 'click a role' shows in the UI."
+          }
+        },
+        {
+          "name": "Get permission",
+          "request": { "method": "GET", "url": "{{iamServiceUrl}}/api/v1/realms/{{realm}}/clients/{{clientId}}/permissions/{{permissionName}}" }
+        },
+        {
+          "name": "Delete permission",
+          "request": { "method": "DELETE", "url": "{{iamServiceUrl}}/api/v1/realms/{{realm}}/clients/{{clientId}}/permissions/{{permissionName}}" }
+        }
+      ]
+    },
+    {
+      "name": "Health",
+      "item": [
+        {
+          "name": "Actuator health",
+          "request": {
+            "method": "GET",
+            "url": "{{iamServiceUrl}}/actuator/health",
+            "description": "Public — permitAll in SecurityConfig, no token needed."
+          }
+        }
+      ]
+    }
+  ]
+}
